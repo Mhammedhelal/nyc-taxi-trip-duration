@@ -15,6 +15,40 @@ from utils_data import apply_feature_engineering, get_feature_lists
 from utils_test import CyclicalFeatures, ToDenseTransformer
 
 
+def _build_preprocessor(feature_lists):
+    """Build the preprocessing pipeline."""
+    cyclical_encoder = CyclicalFeatures(
+        cols=feature_lists['cyclic'],
+        periods=(24, 7, 12, 31)
+    )
+    
+    column_transformer = ColumnTransformer([
+        ('cyclical', cyclical_encoder, feature_lists['cyclic']),
+        ('ohe', OneHotEncoder(handle_unknown='ignore'), feature_lists['categorical']),
+        ('scaling', QuantileTransformer(), feature_lists['numeric']),
+        ('binary', 'passthrough', feature_lists['binary'])
+    ], remainder='drop')
+    
+    return Pipeline([('processor', column_transformer)])
+
+
+def _build_ridge_pipeline(poly_degree, ridge_alpha):
+    """Build Ridge regression pipeline steps."""
+    return [
+        ('polynomial', PolynomialFeatures(degree=poly_degree)),
+        ('regression', Ridge(alpha=ridge_alpha))
+    ]
+
+
+def _build_knn_pipeline(knn_neighbors, knn_weights):
+    """Build KNN regression pipeline steps."""
+    return [
+        ('to_dense', ToDenseTransformer()),
+        ('scaler', StandardScaler()),
+        ('model', KNeighborsRegressor(n_neighbors=knn_neighbors, weights=knn_weights))
+    ]
+
+
 def train_model(
     train,
     feature_lists,
@@ -29,69 +63,34 @@ def train_model(
 ):
     """Train taxi trip duration prediction model."""
     
-    # Prepare X and y
+    # Prepare data
     X_train = train[feature_lists['all']]
     y_train = train['log_trip_duration']
     
-    # Build preprocessing pipeline
-    cyclical_encoder = CyclicalFeatures(
-        cols=feature_lists['cyclic'],
-        periods=(24, 7, 12, 31)
-    )
+    # Build full pipeline steps
+    steps = [('preprocessor', _build_preprocessor(feature_lists))]
     
-    column_transformer = ColumnTransformer([
-        ('cyclical', cyclical_encoder, feature_lists['cyclic']),
-        ('ohe', OneHotEncoder(handle_unknown='ignore'), feature_lists['categorical']),
-        ('scaling', QuantileTransformer(), feature_lists['numeric']),
-        ('binary', 'passthrough', feature_lists['binary'])
-    ], remainder='drop')
-    
-    preprocessor = Pipeline([('processor', column_transformer)])
-    
-    # Transform data
-    X_train_transformed = preprocessor.fit_transform(X_train)
-    
-    # Feature selection
-    selector = None
+    # Add feature selection if applicable
     if feature_selection and model_type == 'ridge':
         print(f"Performing feature selection (Lasso alpha={lasso_alpha})...")
         lasso = Lasso(alpha=lasso_alpha, max_iter=lasso_max_iter)
-        lasso.fit(X_train_transformed, y_train)
-        
-        selector = SelectFromModel(estimator=lasso, prefit=True)
-        X_train_transformed = selector.transform(X_train_transformed)
-        print(f"Features selected: {X_train_transformed.shape[1]}")
+        selector = SelectFromModel(estimator=lasso, prefit=False)
+        steps.append(('selector', selector))
     
-    steps = [('preprocessor', preprocessor)]
-    model_pipeline = None
-    
+    # Add model-specific pipeline
     if model_type == 'ridge':
         print(f"Training model (Ridge alpha={ridge_alpha}, poly degree={poly_degree})...")
-        model_pipeline = Pipeline([
-            ('polynomial', PolynomialFeatures(degree=poly_degree)),
-            ('regression', Ridge(alpha=ridge_alpha))
-        ])
-        model_pipeline.fit(X_train_transformed, y_train)
-        if selector is not None:
-            steps.append(('selector', selector))
-        steps.append(('model', model_pipeline))
+        steps.extend(_build_ridge_pipeline(poly_degree, ridge_alpha))
     elif model_type == 'knn':
         print(f"Training model (KNN neighbors={knn_neighbors}, weights={knn_weights})...")
-        to_dense = ToDenseTransformer()
-        scaler = StandardScaler()
-        X_dense = to_dense.transform(X_train_transformed)
-        X_scaled = scaler.fit_transform(X_dense)
-        model_pipeline = KNeighborsRegressor(n_neighbors=knn_neighbors, weights=knn_weights)
-        model_pipeline.fit(X_scaled, y_train)
-        steps.extend([
-            ('to_dense', to_dense),
-            ('scaler', scaler),
-            ('model', model_pipeline)
-        ])
+        steps.extend(_build_knn_pipeline(knn_neighbors, knn_weights))
     else:
         raise ValueError(f"Unsupported model_type: {model_type}")
     
+    # Build and fit complete pipeline
     full_pipeline = Pipeline(steps)
+    full_pipeline.fit(X_train, y_train)
+    
     return full_pipeline
 
 
