@@ -1,5 +1,7 @@
 import argparse
 import pickle
+from pathlib import Path
+
 import pandas as pd
 
 from utils_eval import eval_model
@@ -7,9 +9,10 @@ from utils_data import apply_feature_engineering
 
 
 if __name__ == '__main__':
+    project_root = Path(__file__).parent.parent
     parser = argparse.ArgumentParser(description='taxi_trip_test')
-    parser.add_argument('--model', type=str, default='models/taxi_model.pkl')
-    parser.add_argument('--dataset', type=str, default='split/test.csv')
+    parser.add_argument('--model', type=str, default=str(project_root / 'models' / 'taxi_model.pkl'))
+    parser.add_argument('--dataset', type=str, default=str(project_root / 'split' / 'test.csv'))
     args = parser.parse_args()
     
     # Load model

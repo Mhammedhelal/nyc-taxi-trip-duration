@@ -1,6 +1,6 @@
 import argparse
-import os
 import pickle
+from pathlib import Path
 
 import pandas as pd
 
@@ -12,7 +12,7 @@ from sklearn.linear_model import Ridge, Lasso
 from sklearn.neighbors import KNeighborsRegressor
 
 from utils_data import apply_feature_engineering, get_feature_lists
-from utils_test import CyclicalFeatures, ToDenseTransformer
+from transformers import CyclicalFeatures, ToDenseTransformer
 
 
 def _build_preprocessor(feature_lists):
@@ -95,9 +95,10 @@ def train_model(
 
 
 def parse_args():
+    project_root = Path(__file__).parent.parent
     parser = argparse.ArgumentParser(description='taxi_trip_train')
-    parser.add_argument('--dataset', type=str, default='../split/train.csv')
-    parser.add_argument('--model_save_name', type=str, default='../models/taxi_model.pkl')
+    parser.add_argument('--dataset', type=str, default=str(project_root / 'split' / 'train.csv'))
+    parser.add_argument('--model_save_name', type=str, default=str(project_root / 'models' / 'taxi_model.pkl'))
     parser.add_argument('--poly_degree', type=int, default=4)
     parser.add_argument('--ridge_alpha', type=float, default=1.0)
     parser.add_argument('--model_type', choices=['ridge', 'knn'], default='ridge')
@@ -149,8 +150,8 @@ def main():
         'feature_lists': feature_lists
     }
     
-    save_path = args.model_save_name
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    save_path = Path(args.model_save_name)
+    save_path.parent.mkdir(parents=True, exist_ok=True)
     
     with open(save_path, 'wb') as f:
         pickle.dump(model_dict, f)
