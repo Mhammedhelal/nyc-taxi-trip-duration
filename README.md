@@ -1,8 +1,8 @@
-# NYC Taxi Trip Duration
+# NYC Taxi Trip Duration Prediction
 
-Feature-rich regression pipeline for the Kaggle NYC Taxi Trip Duration challenge.  
-The repo couples exploratory notebooks with reusable `src/` utilities so we can
-iterate on ideas quickly and then productionise them inside `train.py`/`test.py`.
+A feature-rich regression pipeline for predicting NYC taxi trip durations. This project combines exploratory data analysis, feature engineering, and multiple modeling approaches to deliver accurate predictions on the [Kaggle NYC Taxi Trip Duration](https://www.kaggle.com/c/nyc-taxi-trip-duration) challenge.
+
+**Key Idea:** Couple exploratory notebooks with reusable `src/` utilities to iterate quickly, then productionize validated approaches in `train.py` and `test.py`.
 
 ---
 
@@ -22,14 +22,23 @@ Key notebooks:
 - `Feature Engineering.ipynb` — NYC bounding-box filter, congestion proxies, outlier analysis.
 - `Modeling.ipynb` — benchmarks Ridge/Lasso/ElasticNet, RandomForest/GBMs, and KNN with shared preprocessing.
 
+---
+
 ## Environment Setup
 
+### Quick Install
+
 ```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt  # pandas, numpy, scikit-learn, seaborn, holidays, nbformat
+python -m venv ml_env
+source ml_env/bin/activate  # On Windows: ml_env\Scripts\activate
+pip install -r requirements.txt
 ```
 
-> If a `requirements.txt` is not present, install the packages listed above manually.
+**Required packages:** pandas, numpy, scikit-learn, seaborn, holidays, nbformat
+
+> If `requirements.txt` is missing, install packages manually with the command above.
+
+---
 
 ## CLI Workflow
 
@@ -74,7 +83,23 @@ python test.py \
 
 `test.py` reloads the saved pipeline, reapplies feature engineering with stored statistics, and prints RMSE/R²/MAE.
 
-## Notebook Guidance
+---
+
+## Feature Engineering
+
+Key features engineered in the pipeline:
+
+| Feature | Description |
+| --- | --- |
+| **Distance Metrics** | Haversine distance, Manhattan distance approximations |
+| **Temporal Features** | hour of day, day of week, week of year, holiday indicators |
+| **Congestion Proxies** | aggregated trip patterns per hour/location |
+| **Spatial Clustering** | pickup/dropoff within NYC bounds, zone categorization |
+| **Interaction Terms** | week-hour combinations for seasonal patterns |
+
+Outliers are clipped using IQR thresholding (configurable via `--iqr_factor`), removing ~6.4% of data.
+
+---
 
 1. **EDA.ipynb**  
    - Run top-to-bottom to refresh data checks and markdown insight summaries.
@@ -93,3 +118,13 @@ python test.py \
 - Add weather APIs to enrich congestion signals further.
 - Promote the best modeling notebook configuration into `src/train.py` once validated on the validation split.
 - Automate experiment tracking (e.g., MLflow) to capture hyperparameters and scores per run.
+
+---
+
+## Troubleshooting
+
+**Import errors?** Verify your environment is activated: `source ml_env/bin/activate`
+
+**Model file not found?** Check that model paths are relative to the `src/` directory: `python train.py --dataset ../split/train.csv --model_save_name ../models/my_model.pkl`
+
+**Feature mismatch in test?** Ensure the training data includes the same features as the validation set. The feature engineering step uses train statistics for standardization.

@@ -1,6 +1,7 @@
 import argparse
 import pickle
 from pathlib import Path
+from abc import ABC, abstractmethod
 
 import pandas as pd
 
@@ -32,35 +33,60 @@ def _build_preprocessor(feature_lists):
     return Pipeline([('processor', column_transformer)])
 
 
-def _build_ridge_pipeline(poly_degree, ridge_alpha):
-    """Build Ridge regression pipeline steps."""
-    return [
-        ('polynomial', PolynomialFeatures(degree=poly_degree)),
-        ('regression', Ridge(alpha=ridge_alpha))
-    ]
+class ModelStrategy(ABC):
+    """Base class for model strategies."""
+    
+    @abstractmethod
+    def build_steps(self):
+        """Build and return pipeline steps for the model."""
+        pass
 
 
-def _build_knn_pipeline(knn_neighbors, knn_weights):
-    """Build KNN regression pipeline steps."""
-    return [
-        ('to_dense', ToDenseTransformer()),
-        ('scaler', StandardScaler()),
-        ('model', KNeighborsRegressor(n_neighbors=knn_neighbors, weights=knn_weights))
-    ]
+class RidgeStrategy(ModelStrategy):
+    """Strategy for Ridge regression with optional feature selection."""
+    
+    def __init__(self, poly_degree, ridge_alpha, feature_selection, lasso_alpha, lasso_max_iter):
+        self.poly_degree = poly_degree
+        self.ridge_alpha = ridge_alpha
+        self.feature_selection = feature_selection
+        self.lasso_alpha = lasso_alpha
+        self.lasso_max_iter = lasso_max_iter
+    
+    def build_steps(self):
+        """Build Ridge regression pipeline steps."""
+        steps = []
+        
+        # Add feature selection if applicable
+        if self.feature_selection:
+            print(f"Performing feature selection (Lasso alpha={self.lasso_alpha})...")
+            lasso = Lasso(alpha=self.lasso_alpha, max_iter=self.lasso_max_iter)
+            steps.append(('selector', SelectFromModel(estimator=lasso, prefit=False)))
+        
+        steps.extend([
+            ('polynomial', PolynomialFeatures(degree=self.poly_degree)),
+            ('regression', Ridge(alpha=self.ridge_alpha))
+        ])
+        
+        return steps
 
 
-def train_model(
-    train,
-    feature_lists,
-    poly_degree,
-    ridge_alpha,
-    feature_selection,
-    lasso_alpha,
-    lasso_max_iter,
-    model_type,
-    knn_neighbors,
-    knn_weights,
-):
+class KNNStrategy(ModelStrategy):
+    """Strategy for KNN regression."""
+    
+    def __init__(self, knn_neighbors, knn_weights):
+        self.knn_neighbors = knn_neighbors
+        self.knn_weights = knn_weights
+    
+    def build_steps(self):
+        """Build KNN regression pipeline steps."""
+        return [
+            ('to_dense', ToDenseTransformer()),
+            ('scaler', StandardScaler()),
+            ('model', KNeighborsRegressor(n_neighbors=self.knn_neighbors, weights=self.knn_weights))
+        ]
+
+
+def train_model(train, feature_lists, model_strategy):
     """Train taxi trip duration prediction model."""
     
     # Prepare data
@@ -69,23 +95,7 @@ def train_model(
     
     # Build full pipeline steps
     steps = [('preprocessor', _build_preprocessor(feature_lists))]
-    
-    # Add feature selection if applicable
-    if feature_selection and model_type == 'ridge':
-        print(f"Performing feature selection (Lasso alpha={lasso_alpha})...")
-        lasso = Lasso(alpha=lasso_alpha, max_iter=lasso_max_iter)
-        selector = SelectFromModel(estimator=lasso, prefit=False)
-        steps.append(('selector', selector))
-    
-    # Add model-specific pipeline
-    if model_type == 'ridge':
-        print(f"Training model (Ridge alpha={ridge_alpha}, poly degree={poly_degree})...")
-        steps.extend(_build_ridge_pipeline(poly_degree, ridge_alpha))
-    elif model_type == 'knn':
-        print(f"Training model (KNN neighbors={knn_neighbors}, weights={knn_weights})...")
-        steps.extend(_build_knn_pipeline(knn_neighbors, knn_weights))
-    else:
-        raise ValueError(f"Unsupported model_type: {model_type}")
+    steps.extend(model_strategy.build_steps())
     
     # Build and fit complete pipeline
     full_pipeline = Pipeline(steps)
@@ -129,19 +139,27 @@ def main():
     
     feature_lists = get_feature_lists()
     
+    # Create model strategy
+    if args.model_type == 'ridge':
+        print(f"Training Ridge (alpha={args.ridge_alpha}, poly degree={args.poly_degree})...")
+        strategy = RidgeStrategy(
+            poly_degree=args.poly_degree,
+            ridge_alpha=args.ridge_alpha,
+            feature_selection=args.feature_selection,
+            lasso_alpha=args.lasso_alpha,
+            lasso_max_iter=args.lasso_max_iter
+        )
+    elif args.model_type == 'knn':
+        print(f"Training KNN (neighbors={args.knn_neighbors}, weights={args.knn_weights})...")
+        strategy = KNNStrategy(
+            knn_neighbors=args.knn_neighbors,
+            knn_weights=args.knn_weights
+        )
+    else:
+        raise ValueError(f"Unsupported model_type: {args.model_type}")
+    
     # Train model
-    model = train_model(
-        train_fe,
-        feature_lists,
-        poly_degree=args.poly_degree,
-        ridge_alpha=args.ridge_alpha,
-        feature_selection=args.feature_selection,
-        lasso_alpha=args.lasso_alpha,
-        lasso_max_iter=args.lasso_max_iter,
-        model_type=args.model_type,
-        knn_neighbors=args.knn_neighbors,
-        knn_weights=args.knn_weights
-    )
+    model = train_model(train_fe, feature_lists, strategy)
     
     # Save model with stats
     model_dict = {
