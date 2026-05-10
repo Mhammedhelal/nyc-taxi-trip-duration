@@ -4,6 +4,8 @@ A feature-rich regression pipeline for predicting NYC taxi trip durations. This 
 
 **Key Idea:** Couple exploratory notebooks with reusable `src/` utilities to iterate quickly, then productionize validated approaches in `train.py` and `test.py`.
 
+**Data:** [Download from Google Drive](https://drive.google.com/drive/folders/1OUo50pMZ1CaAx2CE8lh7Un3v2soWDTKw)
+
 ---
 
 ## Project Layout
