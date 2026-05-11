@@ -3,8 +3,31 @@ import pandas as pd
 import numpy as np
 import holidays
 from sklearn.cluster import MiniBatchKMeans
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, QuantileTransformer
+
+from transformers import CyclicalFeatures
 
 
+# ---------------------------------------------------------------------------
+# Preprocessor
+# ---------------------------------------------------------------------------
+def _build_preprocessor(feature_lists):
+    """Build the preprocessing pipeline."""
+    cyclical_encoder = CyclicalFeatures(
+        cols=feature_lists['cyclic'],
+        periods=(24, 7, 12, 31)
+    )
+
+    column_transformer = ColumnTransformer([
+        ('cyclical', cyclical_encoder,           feature_lists['cyclic']),
+        ('ohe',      OneHotEncoder(handle_unknown='ignore'), feature_lists['categorical']),
+        ('scaling',  QuantileTransformer(),      feature_lists['numeric']),
+        ('binary',   'passthrough',              feature_lists['binary'])
+    ], remainder='drop')
+
+    return Pipeline([('processor', column_transformer)])
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -25,9 +48,9 @@ AIRPORTS = {
 US_HOLIDAYS = holidays.US(years=list(range(2016, 2050)), state='NY')
 
 # Hard filters: physics/logic bounds, not statistical (EDA-derived)
-DURATION_MIN_SECONDS   = 30      # < 30 s  → phantom / system record
-DURATION_MAX_SECONDS   = 86_400  # > 24 h  → system error
-ZERO_DIST_DURATION_MAX = 120     # zero-distance + duration > 2 min → GPS/meter fault
+DURATION_MIN_SECONDS   = 30      # < 30 s  -> phantom / system record
+DURATION_MAX_SECONDS   = 86_400  # > 24 h  -> system error
+ZERO_DIST_DURATION_MAX = 120     # zero-distance + duration > 2 min -> GPS/meter fault
 
 
 # ---------------------------------------------------------------------------
@@ -121,9 +144,9 @@ def _step_haversine_distance(df, train_stats, is_training):
 def _step_filter_hard_bounds(df, train_stats, is_training):
     """
     Remove rows that are physically impossible or system errors:
-      1. trip_duration < 30 s  → phantom record
-      2. trip_duration > 24 h  → meter / system error
-      3. haversine_distance == 0 AND duration > 2 min → GPS fault
+      1. trip_duration < 30 s  -> phantom record
+      2. trip_duration > 24 h  -> meter / system error
+      3. haversine_distance == 0 AND duration > 2 min -> GPS fault
     Applied identically at training and inference (logic-based, not statistical).
     """
     n_before = len(df)
