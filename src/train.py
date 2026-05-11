@@ -9,6 +9,29 @@ from models_stratigies import *
 from utils_data import apply_feature_engineering, get_feature_lists, _build_preprocessor
 
 
+from transformers import CyclicalFeatures
+
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, QuantileTransformer
+# ---------------------------------------------------------------------------
+# Preprocessor
+# ---------------------------------------------------------------------------
+def _build_preprocessor(feature_lists):
+    """Build the preprocessing pipeline."""
+    cyclical_encoder = CyclicalFeatures(
+        cols=feature_lists['cyclic'],
+        periods=(24, 7, 12, 31)
+    )
+
+    column_transformer = ColumnTransformer([
+        ('cyclical', cyclical_encoder,           feature_lists['cyclic']),
+        ('ohe',      OneHotEncoder(handle_unknown='ignore'), feature_lists['categorical']),
+        ('scaling',  QuantileTransformer(),      feature_lists['numeric']),
+        ('binary',   'passthrough',              feature_lists['binary'])
+    ], remainder='drop')
+
+    return Pipeline([('processor', column_transformer)])
 
 
 def train_model(train, feature_lists, model_strategy):
