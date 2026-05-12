@@ -1,4 +1,3 @@
-# src/test.py
 import argparse
 import pickle
 from pathlib import Path
@@ -14,6 +13,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='taxi_trip_test')
     parser.add_argument('--model', type=str, default=str(project_root / 'models' / 'taxi_model.pkl'))
     parser.add_argument('--dataset', type=str, default=str(project_root / 'split' / 'test.csv'))
+    parser.add_argument('--pre-engineered', action='store_true', help='Skip feature engineering if data is pre-engineered')
     args = parser.parse_args()
     
     # Load model
@@ -26,7 +26,8 @@ if __name__ == '__main__':
     
     # Load and preprocess data
     data = pd.read_csv(args.dataset)
-    data, _ = apply_feature_engineering(data, train_stats)
+    if not args.pre_engineered:
+        data, _ = apply_feature_engineering(data, train_stats)
     
     # Evaluate
     eval_model(model, data, feature_lists)

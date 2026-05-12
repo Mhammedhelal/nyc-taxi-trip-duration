@@ -52,6 +52,11 @@ def parse_args():
         help='Directory where engineered Parquet files and train_stats.pkl are saved.',
     )
     parser.add_argument(
+        '--train_stats',
+        type=str,
+        help='Stats of The pre-engineered train datasets'
+    )
+    parser.add_argument(
         '--iqr_factor',
         type=float,
         default=2.5,
@@ -70,27 +75,33 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # ---- Training data -------------------------------------------------- #
-    print(f"Loading training data from: {args.train_dataset}")
-    train_raw = pd.read_csv(args.train_dataset)
-    print(f"  Raw rows: {len(train_raw):,}")
+    if args.train_dataset:
+        print(f"Loading training data from: {args.train_dataset}")
+        train_raw = pd.read_csv(args.train_dataset)
+        print(f"  Raw rows: {len(train_raw):,}")
 
-    print("\nApplying feature engineering to training data ...")
-    train_fe, train_stats = apply_feature_engineering(
-        train_raw, train_stats=None, iqr_factor=args.iqr_factor
-    )
-    print(f"  Engineered rows: {len(train_fe):,}")
+        print("\nApplying feature engineering to training data ...")
+        train_fe, train_stats = apply_feature_engineering(
+            train_raw, train_stats=None, iqr_factor=args.iqr_factor
+        )
+        print(f"  Engineered rows: {len(train_fe):,}")
 
-    train_out = output_dir / 'train_engineered.parquet'
-    train_fe.to_parquet(train_out, index=False)
-    print(f"  Saved → {train_out}")
+        train_out = output_dir / 'train_engineered.parquet'
+        train_fe.to_parquet(train_out, index=False)
+        print(f"  Saved → {train_out}")
 
-    stats_out = output_dir / 'train_stats.pkl'
-    with open(stats_out, 'wb') as f:
-        pickle.dump(train_stats, f)
-    print(f"  Saved → {stats_out}")
+        stats_out = output_dir / 'train_stats.pkl'
+        with open(stats_out, 'wb') as f:
+            pickle.dump(train_stats, f)
+        print(f"  Saved → {stats_out}")
+    else:
+        train_stats = None
 
-    # ---- Test data (optional) ------------------------------------------- #
+    # ---- Test data ------------------------------------------- #
     if args.test_dataset:
+        if not args.train_stats:
+            print("not train stats provided")
+            return
         print(f"\nLoading test data from: {args.test_dataset}")
         test_raw = pd.read_csv(args.test_dataset)
         print(f"  Raw rows: {len(test_raw):,}")
