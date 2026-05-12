@@ -25,7 +25,7 @@ if __name__ == '__main__':
     feature_lists = loaded_model_dict['feature_lists']
     
     # Load and preprocess data
-    data = pd.read_csv(args.dataset)
+    data = pd.read_parquet(args.dataset)
     if not args.pre_engineered:
         data, _ = apply_feature_engineering(data, train_stats)
     
