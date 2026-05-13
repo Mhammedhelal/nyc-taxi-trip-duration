@@ -132,7 +132,7 @@ def parse_args():
 
     # ---- Ridge ----------------------------------------------------------- #
     ridge = parser.add_argument_group('Ridge options')
-    ridge.add_argument('--poly_degree',  type=int,   default=4)
+    ridge.add_argument('--poly_degree',  type=int,   default=1)
     ridge.add_argument('--ridge_alpha',  type=float, default=1.0)
     ridge.add_argument(
         '--feature_selection', dest='feature_selection', action='store_true',

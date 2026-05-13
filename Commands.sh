@@ -10,7 +10,10 @@
 #   │   ├── train.csv
 #   │   ├── test.csv
 #   │   ├── train_engineered.parquet   ← produced by feature_engineering.py
-#   │   ├── test_engineered.parquet    ← produced by feature_engineering.py
+#   |   ├── test
+#   │       ├── test_engineered.parquet    ← produced by feature_engineering.py
+#   |   ├── val
+#   │       ├── test_engineered.parquet    ← produced by feature_engineering.py
 #   │   └── train_stats.pkl            ← produced by feature_engineering.py
 #   ├── models/
 #   │   └── taxi_model.pkl
@@ -44,7 +47,7 @@ python src/feature_engineering.py \
 python src/feature_engineering.py \
     --train_dataset  split/train.csv \
     --test_dataset   split/test.csv \
-    --train_stats    split/train_stats.pkl \
+    --train_stats    data_processed/train_stats.pkl \
     --output_dir     split \
     --iqr_factor     2.5
 
@@ -58,27 +61,27 @@ python src/feature_engineering.py \
 #         Requires both --engineered_dataset and --train_stats.
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Ridge (default: poly_degree=4, alpha=1.0, with Lasso feature selection)
+# Ridge (default: poly_degree=1, alpha=1.0, with Lasso feature selection)
 python src/train.py \
-    --engineered_dataset split/train_engineered.parquet \
-    --train_stats        split/train_stats.pkl \
+    --engineered_dataset data_processed/train_engineered.parquet \
+    --train_stats        data_processed/train_stats.pkl \
     --model_type         ridge \
-    --poly_degree        4 \
+    --poly_degree        1 \
     --ridge_alpha        1.0 \
     --model_save_name    models/ridge_model.pkl
 
 # Ridge WITHOUT feature selection
 python src/train.py \
-    --engineered_dataset split/train_engineered.parquet \
-    --train_stats        split/train_stats.pkl \
+    --engineered_dataset data_processed/train_engineered.parquet \
+    --train_stats        data_processed/train_stats.pkl \
     --model_type         ridge \
     --no_feature_selection \
     --model_save_name    models/ridge_no_fs_model.pkl
 
 # Lasso  (alpha=5e-4, max_iter=5000)
 python src/train.py \
-    --engineered_dataset split/train_engineered.parquet \
-    --train_stats        split/train_stats.pkl \
+    --engineered_dataset data_processed/train_engineered.parquet \
+    --train_stats        data_processed/train_stats.pkl \
     --model_type         lasso \
     --lasso_alpha        5e-4 \
     --lasso_max_iter     5000 \
@@ -86,8 +89,8 @@ python src/train.py \
 
 # ElasticNet  (alpha=5e-4, l1_ratio=0.3)
 python src/train.py \
-    --engineered_dataset split/train_engineered.parquet \
-    --train_stats        split/train_stats.pkl \
+    --engineered_dataset data_processed/train_engineered.parquet \
+    --train_stats        data_processed/train_stats.pkl \
     --model_type         elasticnet \
     --en_alpha           5e-4 \
     --en_l1_ratio        0.3 \
@@ -96,8 +99,8 @@ python src/train.py \
 
 # KNN  (k=10, distance-weighted)
 python src/train.py \
-    --engineered_dataset split/train_engineered.parquet \
-    --train_stats        split/train_stats.pkl \
+    --engineered_dataset data_processed/train_engineered.parquet \
+    --train_stats        data_processed/train_stats.pkl \
     --model_type         knn \
     --knn_neighbors      10 \
     --knn_weights        distance \
@@ -105,8 +108,8 @@ python src/train.py \
 
 # Random Forest  (200 trees, max_depth=20)
 python src/train.py \
-    --engineered_dataset split/train_engineered.parquet \
-    --train_stats        split/train_stats.pkl \
+    --engineered_dataset data_processed/train_engineered.parquet \
+    --train_stats        data_processed/train_stats.pkl \
     --model_type         randomforest \
     --rf_n_estimators    200 \
     --rf_max_depth       20 \
@@ -115,8 +118,8 @@ python src/train.py \
 
 # Gradient Boosting  (sklearn, slower but stable)
 python src/train.py \
-    --engineered_dataset split/train_engineered.parquet \
-    --train_stats        split/train_stats.pkl \
+    --engineered_dataset data_processed/train_engineered.parquet \
+    --train_stats        data_processed/train_stats.pkl \
     --model_type         gradientboosting \
     --gb_n_estimators    100 \
     --gb_learning_rate   0.1 \
@@ -125,8 +128,8 @@ python src/train.py \
 
 # HistGradientBoosting  (fast, recommended over GradientBoosting for large data)
 python src/train.py \
-    --engineered_dataset split/train_engineered.parquet \
-    --train_stats        split/train_stats.pkl \
+    --engineered_dataset data_processed/train_engineered.parquet \
+    --train_stats        data_processed/train_stats.pkl \
     --model_type         histgradientboosting \
     --hgb_max_depth      10 \
     --hgb_learning_rate  0.1 \
@@ -135,8 +138,8 @@ python src/train.py \
 
 # XGBoost  (requires: pip install xgboost)
 python src/train.py \
-    --engineered_dataset split/train_engineered.parquet \
-    --train_stats        split/train_stats.pkl \
+    --engineered_dataset data_processed/train_engineered.parquet \
+    --train_stats        data_processed/train_stats.pkl \
     --model_type         xgboost \
     --xgb_n_estimators   200 \
     --xgb_learning_rate  0.1 \
