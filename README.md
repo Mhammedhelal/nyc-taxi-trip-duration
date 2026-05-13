@@ -162,16 +162,22 @@ Outliers are removed using IQR thresholding (configurable via `--iqr_factor`, de
 All metrics are on log-transformed trip duration (`log1p(trip_duration)`). Lower RMSE/MAE and higher R² is better.
 
 | Model | Params | Split | RMSE | R² | MAE |
-|---|---|---|---|---|---|
-| Ridge | degree=1, α=1.0, with feature selection | Train | 0.1865 | 0.9241 | 0.1098 |
-| Ridge | degree=1, α=1.0, with feature selection | Val | 0.1861 | 0.9246 | 0.1098 |
-| Ridge | degree=1, α=1.0, with feature selection | Test | 0.1861 | 0.9244 | 0.1100 |
-| Ridge | degree=2, α=1.0, with feature selection | Train | 0.1557 | 0.9471 | 0.0859 |
-| Ridge | degree=2, α=1.0, with feature selection | Val | 0.1540 | 0.9484 | 0.0856 |
-| Ridge | degree=2, α=1.0, with feature selection | Test | 0.1551 | 0.9475 | 0.0862 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Ridge | degree=1, α=1.0 | Train | 0.1865 | 0.9241 | 0.1098 |
+| Ridge | degree=1, α=1.0 | Val | 0.1861 | 0.9246 | 0.1098 |
+| Ridge | degree=1, α=1.0 | Test | 0.1861 | 0.9244 | 0.1100 |
+| | | | | | |
+| | | | | | |
+| Ridge | degree=2, α=1.0 | Train | 0.1557 | 0.9471 | 0.0859 |
+| Ridge | degree=2, α=1.0 | Val | 0.1540 | 0.9484 | 0.0856 |
+| Ridge | degree=2, α=1.0 | Test | 0.1551 | 0.9475 | 0.0862 |
+| | | | | | |
+| | | | | | |
 | Lasso | α=5e-4, max_iter=5000 | Train | 0.1890 | 0.9221 | 0.1109 |
 | Lasso | α=5e-4, max_iter=5000 | Val | 0.1886 | 0.9226 | 0.1108 |
 | Lasso | α=5e-4, max_iter=5000 | Test | 0.1886 | 0.9224 | 0.1111 |
+| | | | | | |
+| | | | | | |
 | ElasticNet | α=5e-4, l1_ratio=0.3 | Train | 0.1890 | 0.9221 | 0.1109 |
 | ElasticNet | α=5e-4, l1_ratio=0.3 | Val | 0.1886 | 0.9226 | 0.1108 |
 | ElasticNet | α=5e-4, l1_ratio=0.3 | Test | 0.1886 | 0.9224 | 0.1111 |
