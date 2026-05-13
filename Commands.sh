@@ -32,15 +32,19 @@ pip install scikit-learn pandas numpy holidays xgboost pyarrow
 # 1. FEATURE ENGINEERING  (run ONCE; reuse for all models)
 # =============================================================================
 
-# --- 1a. Train data only (test FE will be done inline during test.py) ---
+# --- 1a. Train data only ---
 python src/feature_engineering.py \
     --train_dataset  split/train.csv \
     --output_dir     split
 
 # --- 1b. Train + test data in one shot (recommended) ---
+#         --train_stats must point to the pkl produced in the same run.
+#         Because feature_engineering.py writes train_stats.pkl before
+#         processing the test set, pass the output path explicitly.
 python src/feature_engineering.py \
     --train_dataset  split/train.csv \
     --test_dataset   split/test.csv \
+    --train_stats    split/train_stats.pkl \
     --output_dir     split \
     --iqr_factor     2.5
 
@@ -51,6 +55,7 @@ python src/feature_engineering.py \
 
 # ─────────────────────────────────────────────────────────────────────────────
 # MODE A: use pre-engineered Parquet  ← fast; skip FE on every run
+#         Requires both --engineered_dataset and --train_stats.
 # ─────────────────────────────────────────────────────────────────────────────
 
 # Ridge (default: poly_degree=4, alpha=1.0, with Lasso feature selection)
@@ -154,15 +159,18 @@ python src/train.py \
 # 3. EVALUATION / TESTING
 # =============================================================================
 
-# --- 3a. Test using pre-engineered test Parquet (fast) ---
-#         test.py calls apply_feature_engineering with stored train_stats,
-#         so passing the raw CSV also works — but Parquet is faster.
-
+# --- 3a. Test on raw CSV (FE applied inline using stored train_stats) ---
 python src/test.py \
     --model   models/hgb_model.pkl \
     --dataset split/test.csv
 
-# --- 3b. Evaluate every saved model in sequence ---
+# --- 3b. Test on pre-engineered Parquet (fast; skip FE) ---
+python src/test.py \
+    --model          models/hgb_model.pkl \
+    --dataset        split/test_engineered.parquet \
+    --pre-engineered
+
+# --- 3c. Evaluate every saved model in sequence (raw CSV path) ---
 for MODEL in models/*.pkl; do
     echo "========== $MODEL =========="
     python src/test.py --model "$MODEL" --dataset split/test.csv
@@ -173,8 +181,15 @@ done
 # 4. TIPS
 # =============================================================================
 #
-# • Run step 1 once, then freely iterate over step 2 with different
-#   --model_type / hyperparameter flags.  FE is the bottleneck.
+# • Run step 1b once (with --train_stats), then freely iterate over step 2
+#   with different --model_type / hyperparameter flags.  FE is the bottleneck.
+#
+# • Step 1b requires --train_stats to be passed so the script knows where to
+#   load the pkl it just wrote before processing the test set.
+#
+# • test.py reads the dataset with pd.read_parquet when --pre-engineered is
+#   set; pass a .parquet file in that case (see 3b).  Without the flag it
+#   reads a raw CSV and applies FE inline (see 3a).
 #
 # • For very large datasets, prefer --model_type histgradientboosting or
 #   xgboost; both handle large feature matrices efficiently.
