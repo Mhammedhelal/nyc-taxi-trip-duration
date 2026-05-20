@@ -168,39 +168,39 @@ Here is your updated table with the Gradient Boosting, HistGradientBoosting, and
 | Ridge | degree=1, α=1.0 | Train | 0.1865 | 0.9241 | 0.1098 |
 | Ridge | degree=1, α=1.0 | Val | 0.1861 | 0.9246 | 0.1098 |
 | Ridge | degree=1, α=1.0 | Test | 0.1861 | 0.9244 | 0.1100 |
-|
-|
-|
+|||
+|||
+|||
 | Ridge | degree=2, α=1.0 | Train | 0.1557 | 0.9471 | 0.0859 |
 | Ridge | degree=2, α=1.0 | Val | 0.1540 | 0.9484 | 0.0856 |
 | Ridge | degree=2, α=1.0 | Test | 0.1551 | 0.9475 | 0.0862 |
-|
-|
-|
+|||
+|||
+|||
 | Lasso | α=5e-4, max_iter=5000 | Train | 0.1890 | 0.9221 | 0.1109 |
 | Lasso | α=5e-4, max_iter=5000 | Val | 0.1886 | 0.9226 | 0.1108 |
 | Lasso | α=5e-4, max_iter=5000 | Test | 0.1886 | 0.9224 | 0.1111 |
-|
-|
-|
+|||
+|||
+|||
 | ElasticNet | α=5e-4, l1_ratio=0.3 | Train | 0.1890 | 0.9221 | 0.1109 |
 | ElasticNet | α=5e-4, l1_ratio=0.3 | Val | 0.1886 | 0.9226 | 0.1108 |
 | ElasticNet | α=5e-4, l1_ratio=0.3 | Test | 0.1886 | 0.9224 | 0.1111 |
-|
-|
-|
+|||
+|||
+|||
 | Gradient Boosting | n_estimators=100, lr=0.1, max_depth=3 | Train | 0.0454 | 0.9955 | 0.0297 |
 | Gradient Boosting | n_estimators=100, lr=0.1, max_depth=3 | Val | 0.0469 | 0.9952 | 0.0299 |
 | Gradient Boosting | n_estimators=100, lr=0.1, max_depth=3 | Test | 0.0471 | 0.9952 | 0.0299 |
-|
-|
-|
+|||
+|||
+|||
 | HistGradientBoosting | max_depth=10, lr=0.1, max_iter=100 | Train | 0.0562 | 0.9931 | 0.0190 |
 | HistGradientBoosting | max_depth=10, lr=0.1, max_iter=100 | Val | 0.0625 | 0.9915 | 0.0193 |
 | HistGradientBoosting | max_depth=10, lr=0.1, max_iter=100 | Test | 0.0613 | 0.9918 | 0.0193 |
-|
-|
-|
+|||
+|||
+|||
 | XGBoost | n_estimators=200, lr=0.1, max_depth=6, subsample=0.8, colsample_bytree=0.8 | Train | 0.0474 | 0.9951 | 0.0160 |
 | XGBoost | n_estimators=200, lr=0.1, max_depth=6, subsample=0.8, colsample_bytree=0.8 | Val | 0.0637 | 0.9912 | 0.0170 |
 | XGBoost | n_estimators=200, lr=0.1, max_depth=6, subsample=0.8, colsample_bytree=0.8 | Test | 0.0629 | 0.9914 | 0.0170 |
